@@ -26,11 +26,22 @@ class _GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Game Screen'),
-      ),
-      body: Center(
-        child: Text('Welcome to the Game!'),
+      appBar: AppBar(title: Text('Game Screen')),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text('Welcome to the Game!'),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.logout),
+            label: const Text('CERRAR SESIÓN'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              print('👋👋Cerrando sesión y desconectando socket...');
+              GameSocketService().handleLogout();
+              print(' llegado hasta aqui 2');
+            },
+          ),
+        ],
       ),
     );
   }
