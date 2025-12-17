@@ -27,7 +27,8 @@ class GameSocketService {
     socket = IO.io(
       serverUrl,
       IO.OptionBuilder()
-          .setTransports(['websocket'])
+          .setTransports(['polling', 'websocket']) // Importante: deja ambos por ahora
+          .setAuth({'token': idToken})             // 👈 ¡NUEVO! Envía el token al conectar
           .disableAutoConnect()
           .build(),
     );
@@ -48,15 +49,36 @@ class GameSocketService {
     });
 
     socket!.connect();
+
+    socket!.onConnect((_) {
+      print('✅✅ Conectado al servidor de sockets');
+      socket!.emit('authenticate', {'token': idToken});
+      _isConnected = true;
+    });
+
+    // 👇 AÑADE ESTO PARA VER EL ERROR REAL
+    socket!.on('connect_error', (data) {
+      print('❌❌ ERROR DE CONEXIÓN: $data');
+    });
+    
+    socket!.on('connect_timeout', (data) {
+      print('⏰⏰ TIMEOUT DE CONEXIÓN: $data');
+    });
   }
 
   // --- MÉTODOS DE JUEGO (EMITTERS) ---
 
   // NUEVO: Para buscar mesa
   void joinGame() {
+    // Imprimimos el estado actual para depurar
+    print('Intento de unirse. Socket: ${socket != null}, Conectado: $_isConnected');
+
     if (socket != null && _isConnected) {
-      print('🔍 Buscando mesa...');
-      socket!.emit('join_game'); // Importante: que coincida con el backend
+      print('🔍 Enviando evento join_game al servidor...');
+      socket!.emit('join_game');
+    } else {
+      print('⚠️ ERROR: No se puede buscar partida porque no hay conexión.');
+      print(' Estado del socket: ${socket?.connected}');
     }
   }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:lottie/lottie.dart';
 import 'firebase_options.dart';
 import 'views/game/game_screen.dart';
 import 'views/auth/login_screen.dart';
@@ -23,9 +22,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const PokerComingSoonScreen2(),
+      //home: const PokerComingSoonScreen2(),
 
-      //home: AuthWrapper(),
+      home: AuthWrapper(),
     );
   }
 }
