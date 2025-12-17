@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lottie/lottie.dart';
 import 'firebase_options.dart';
 import 'views/game/game_screen.dart';
 import 'views/auth/login_screen.dart';
-
+import 'views/game/coming_soon2.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -22,11 +23,12 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: AuthWrapper(), 
+      home: const PokerComingSoonScreen2(),
+
+      //home: AuthWrapper(),
     );
   }
 }
-
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -45,13 +47,13 @@ class AuthWrapper extends StatelessWidget {
         }
         // Login correcto.
         if (snapshot.hasData) {
-          return const GameScreen(); 
-        }
-        else {
-          // El usuario no ha iniciado sesión.
+          return const GameScreen();
+        } else {
           return const LoginScreen();
         }
       },
     );
   }
+  
+  
 }

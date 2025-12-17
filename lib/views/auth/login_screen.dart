@@ -23,7 +23,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Lógica de Registro/Login
   Future<void> _signIn() async {
+    // 1. setState inicial: Se puede hacer sin mounted ya que es síncrono
     setState(() => _status = 'Logeando/Registrando...');
+    
     try {
       // 1. Intentar registrar (crear cuenta)
       UserCredential userCredential = await _auth
@@ -31,9 +33,14 @@ class _LoginScreenState extends State<LoginScreen> {
             email: _emailCtrl.text,
             password: _passwordCtlr.text,
           );
-      setState(() {
-        _status = 'Registrado ${userCredential.user?.email}';
-      });
+      
+      // 🚨 CORRECCIÓN 1: Comprobar si el widget sigue montado
+      if (mounted) {
+        setState(() {
+          _status = 'Registrado ${userCredential.user?.email}';
+        });
+      }
+      
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
         // 2. Si ya existe, intentar logear
@@ -43,36 +50,50 @@ class _LoginScreenState extends State<LoginScreen> {
                 email: _emailCtrl.text,
                 password: _passwordCtlr.text,
               );
-          setState(() {
-            _status = 'Logeado como:  ${userCredential.user?.email}';
-          });
+          
+          // 🚨 CORRECCIÓN 2: Comprobar si el widget sigue montado
+          // Si el login es exitoso, AuthWrapper navegará a GameScreen, 
+          // destruyendo este widget.
+          if (mounted) {
+            setState(() {
+              _status = 'Logeado como:  ${userCredential.user?.email}';
+            });
+          }
+          
         } on FirebaseAuthException catch (e) {
-          setState(() {
-            _status = 'Login failed: ${e.message}';
-          });
+          if (mounted) {
+            setState(() {
+              _status = 'Login failed: ${e.message}';
+            });
+          }
         }
       } else {
-        setState(() {
-          _status = 'Error de Firebase: ${e.code}';
-        });
+        if (mounted) {
+          setState(() {
+            _status = 'Error de Firebase: ${e.code}';
+          });
+        }
       }
     }
-    // 3. Probar conexión al backend (HTTP)
-    await _testBackendConnection();
+    if (mounted) {
+      await _testBackendConnection();
+    }
   }
 
   // Lógica de Prueba de Conexión HTTP al Backend
   Future<void> _testBackendConnection() async {
     User? user = _auth.currentUser;
     if (user == null) {
-      setState(() => _status = 'Usuario no autenticado');
+      if (mounted) setState(() => _status = 'Usuario no autenticado');
       return;
     }
 
-    setState(() => _status = 'Obteniendo token de ID y conectando Render...');
+    // setState inicial
+    if (mounted) setState(() => _status = 'Obteniendo token de ID y conectando Render...');
+    
     String? token = await user.getIdToken();
     if (token == null) {
-      setState(() => _status = 'No se pudo obtener el token de ID');
+      if (mounted) setState(() => _status = 'No se pudo obtener el token de ID');
       return;
     }
 
@@ -87,24 +108,28 @@ class _LoginScreenState extends State<LoginScreen> {
             '{"key": "last_login", "value": "${DateTime.now().toIso8601String()}"}',
       );
 
-      if (response.statusCode == 200) {
+      if (mounted) {
+        if (response.statusCode == 200) {
             setState(() {
               _status = '✅ Conexión OK: Datos guardados en Redis (200)';
             });
           } else if (response.statusCode == 401 || response.statusCode == 403) {
-              setState(() {
+            setState(() {
               _status = '❌ ERROR ${response.statusCode}: Token Rechazado (Revisar middleware)';
             });
           }
           else {
-              setState(() {
+            setState(() {
               _status = '❌ ERROR ${response.statusCode}: Servidor falló. Revisar logs de Render.';
             });
           }
+      }
     } catch (e) {
-      setState(() {
-        _status = '❌ ERROR DE CONEXIÓN: No se pudo conectar al host. (Verificar URL/Red)';
-      });
+      if (mounted) {
+        setState(() {
+          _status = '❌ ERROR DE CONEXIÓN: No se pudo conectar al host. (Verificar URL/Red)';
+        });
+      }
       print('HTTP EXCEPTION: $e');
     }
   }
