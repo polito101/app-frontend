@@ -16,7 +16,7 @@ class _GameScreenState extends State<GameScreen> {
   List<dynamic> _myCards = [];
   List<dynamic> _publicPlayers = []; 
   String _roomId = '';
-  int _potSize = 0;
+  final int _potSize = 0;
   bool _isLoading = false;
 
   @override
@@ -169,7 +169,7 @@ class _GameScreenState extends State<GameScreen> {
                     
                     const Spacer(),
 
-                    // MIS CARTAS (Aquí es donde brilla tu lógica anterior)
+                    // MIS CARTAS
                     if (_myCards.isNotEmpty)
                       SizedBox(
                         height: 100,
@@ -180,7 +180,7 @@ class _GameScreenState extends State<GameScreen> {
                             child: PokerCard(
                               rank: card['rank'],
                               suit: card['suit'],
-                              width: 70, // Cartas grandes para mí
+                              width: 70,
                             ),
                           )).toList(),
                         ),

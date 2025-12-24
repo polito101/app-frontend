@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'views/game/game_screen.dart';
 import 'views/auth/login_screen.dart';
-import 'views/game/coming_soon2.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

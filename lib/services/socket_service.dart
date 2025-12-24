@@ -56,7 +56,6 @@ class GameSocketService {
       _isConnected = true;
     });
 
-    // 👇 AÑADE ESTO PARA VER EL ERROR REAL
     socket!.on('connect_error', (data) {
       print('❌❌ ERROR DE CONEXIÓN: $data');
     });

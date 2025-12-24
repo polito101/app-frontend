@@ -23,7 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Lógica de Registro/Login
   Future<void> _signIn() async {
-    // 1. setState inicial: Se puede hacer sin mounted ya que es síncrono
     setState(() => _status = 'Logeando/Registrando...');
     
     try {
@@ -34,7 +33,6 @@ class _LoginScreenState extends State<LoginScreen> {
             password: _passwordCtlr.text,
           );
       
-      // 🚨 CORRECCIÓN 1: Comprobar si el widget sigue montado
       if (mounted) {
         setState(() {
           _status = 'Registrado ${userCredential.user?.email}';
@@ -51,9 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 password: _passwordCtlr.text,
               );
           
-          // 🚨 CORRECCIÓN 2: Comprobar si el widget sigue montado
-          // Si el login es exitoso, AuthWrapper navegará a GameScreen, 
-          // destruyendo este widget.
+         
           if (mounted) {
             setState(() {
               _status = 'Logeado como:  ${userCredential.user?.email}';
