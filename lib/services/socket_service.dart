@@ -1,128 +1,82 @@
-// lib/services/socket_service.dart
-
-// ignore: library_prefixes
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:firebase_auth/firebase_auth.dart';
 
 class GameSocketService {
   static final GameSocketService _instance = GameSocketService._internal();
   factory GameSocketService() => _instance;
-  GameSocketService._internal();
+  
+  // 1. Inicializamos el socket en el constructor (sin conectar aún)
+  GameSocketService._internal() {
+    _initSocket();
+  }
 
-  IO.Socket? socket; 
-  final String serverUrl = 'https://api.chiribito.com';
+  IO.Socket? socket;
+  final String serverUrl = 'https://api.chiribito.com'; 
   bool _isConnected = false;
-
-  // Callback para la UI
   Function(List<dynamic>)? onCardsReceived;
 
+  //Nueva función interna para preparar el objeto
+  void _initSocket() {
+    socket = IO.io(
+      serverUrl,
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .disableAutoConnect() // Importante: No conecta todavía
+          .build(),
+    );
+  }
+
+  // 3. Modificamos connectAndAuthenticate para usar el socket que YA existe
   void connectAndAuthenticate() async {
     if (_isConnected) return;
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-    
     final idToken = await user.getIdToken();
 
-    socket = IO.io(
-      serverUrl,
-      IO.OptionBuilder()
-          .setTransports(['polling', 'websocket']) // Importante: deja ambos por ahora
-          .setAuth({'token': idToken})             // 👈 ¡NUEVO! Envía el token al conectar
-          .disableAutoConnect()
-          .build(),
-    );
-
+    // Actualizamos la auth del socket existente
+    socket!.io.options?['auth'] = {'token': idToken};
+    
     socket!.onConnect((_) {
-      print('✅✅Conectado al servidor de sockets');
-      socket!.emit('authenticate', {'token': idToken});
+      print('✅✅ Conectado al servidor');
       _isConnected = true;
-    });
-
-    socket!.on('authenticated', (data) {
-      print('✅✅Autenticado con éxito: $data');
-    });
-
-    socket!.onDisconnect((_) {
-      _isConnected = false;
-      print('⚠️⚠️Desconectado del servidor');
-    });
-
-    socket!.connect();
-
-    socket!.onConnect((_) {
-      print('✅✅ Conectado al servidor de sockets');
-      socket!.emit('authenticate', {'token': idToken});
-      _isConnected = true;
-    });
-
-    socket!.on('connect_error', (data) {
-      print('❌❌ ERROR DE CONEXIÓN: $data');
     });
     
-    socket!.on('connect_timeout', (data) {
-      print('⏰⏰ TIMEOUT DE CONEXIÓN: $data');
-    });
+    socket!.onDisconnect((_) => _isConnected = false);
+
+    socket!.connect();
   }
-
-  // --- MÉTODOS DE JUEGO (EMITTERS) ---
-
-  // NUEVO: Para buscar mesa
-  void joinGame() {
-    // Imprimimos el estado actual para depurar
-    print('Intento de unirse. Socket: ${socket != null}, Conectado: $_isConnected');
-
-    if (socket != null && _isConnected) {
-      print('🔍 Enviando evento join_game al servidor...');
-      socket!.emit('join_game');
-    } else {
-      print('⚠️ ERROR: No se puede buscar partida porque no hay conexión.');
-      print(' Estado del socket: ${socket?.connected}');
-    }
-  }
-
-  void startGame() {
-    if (socket != null && _isConnected) {
-      print('🃏 Solicitando iniciar partida...');
-      socket!.emit('start_game');
-    }
-  }
-
-  // --- ESCUCHADORES (LISTENERS) ---
 
   void listenToGameEvents(Function(Map<String, dynamic>) onRoomJoined) {
-    if (socket == null) return;
+    if (socket == null) _initSocket(); 
 
-    // Escuchar cuando nos unimos a una sala
+    socket!.off('joined_room'); 
+    
     socket!.on('joined_room', (data) {
       print('🚀 Sala unida: ${data['roomId']}');
       onRoomJoined(data);
     });
 
-    // Escuchar cartas privadas
     socket!.on('your_cards', (data) {
-      print('🃏 Cartas recibidas: ${data['cards']}');
-      if (onCardsReceived != null) {
-        onCardsReceived!(data['cards']);
-      }
+      if (onCardsReceived != null) onCardsReceived!(data['cards']);
     });
     
-    // Escuchar aviso global
-    socket!.on('game_started', (data) {
-      print('🔔 El juego ha comenzado oficialmente');
-    });
+    socket!.on('game_started', (_) => print('🔔 Juego iniciado'));
+  }
 
-    // Manejo de errores del servidor
-    socket!.on('error', (data) {
-      print('❌ Error del servidor: ${data['message']}');
-    });
+  void joinGame() {
+    if (socket != null) {
+      print('🔍 Buscando mesa...');
+      socket!.emit('join_game');
+    }
+  }
+
+  void startGame() {
+    if (socket != null) socket!.emit('start_game');
   }
 
   Future<void> handleLogout() async {
-    if (socket != null) { 
-      socket!.disconnect();
-    }
+    socket?.disconnect();
     await FirebaseAuth.instance.signOut();
-    _isConnected = false;
   }
 }

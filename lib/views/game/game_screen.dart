@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/socket_service.dart';
-import '../../widgets/poker_card.dart'; // Asegúrate de importar el archivo que creamos arriba
+import '../../widgets/poker_card.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -23,6 +23,8 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     super.initState();
 
+    _socketService.connectAndAuthenticate();
+    
     // 1. Escuchar mis cartas privadas
     _socketService.onCardsReceived = (cards) {
       if (mounted) setState(() => _myCards = cards);
@@ -40,8 +42,6 @@ class _GameScreenState extends State<GameScreen> {
       }
     });
 
-    // 3. Conectar al entrar
-    _socketService.connectAndAuthenticate();
   }
 
   void _handleJoinGame() {
