@@ -33,34 +33,37 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _setupSocketListeners() {
-    // 1. Fase Lobby: Entrar a la sala
+    // 1. Fase Lobby
     _socketService.listeners?.onRoomEvents(
       onJoined: (data) {
         if (mounted) {
           setState(() {
             _roomId = data['roomId'];
             _publicPlayers = data['players'] ?? [];
+            _potSize = int.tryParse(data['pot'].toString()) ?? 0;
+            
+            // ✅ CORRECCIÓN 1: Leer el turno al unirse
+            _currentTurnIndex = data['turn'] ?? 0; 
+            
             _isLoading = false;
-            _findMySeat(); // Averiguar dónde me senté
+            _findMySeat();
           });
         }
       },
       onNewPlayer: (data) {
-        // Actualizar lista si entra alguien
         if (data['players'] != null && mounted) {
           setState(() => _publicPlayers = data['players']);
         }
       },
     );
 
-    // 2. Fase Juego: Actualizaciones en tiempo real
+    // 2. Fase Juego
     _socketService.listeners?.onGameUpdates(
       onUpdate: (data) {
         if (mounted) {
           setState(() {
             _potSize = int.tryParse(data['pot'].toString()) ?? 0;
-            _currentTurnIndex = data['turn'];
-            
+            _currentTurnIndex = data['turn']; // Actualizar turno
             if (data['players'] != null) {
               _publicPlayers = data['players'];
             }
@@ -72,8 +75,12 @@ class _GameScreenState extends State<GameScreen> {
       },
       onGameStarted: (data) {
         print("🃏 La partida ha comenzado");
-        if (data['players'] != null && mounted) {
-           setState(() => _publicPlayers = data['players']);
+        if (mounted) {
+           setState(() {
+             // ✅ CORRECCIÓN 2: Actualizar turno al empezar
+             if (data['turn'] != null) _currentTurnIndex = data['turn'];
+             if (data['players'] != null) _publicPlayers = data['players'];
+           });
         }
       }
     );
