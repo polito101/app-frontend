@@ -234,6 +234,14 @@ class _GameScreenState extends State<GameScreen> {
                     ),
                     
                     const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      color: Colors.red.withOpacity(0.2),
+                      child: Text(
+                        "DEBUG: Mi Asiento: $_mySeatIndex | Turno de: $_currentTurnIndex | ¿Es mi turno?: ${_mySeatIndex == _currentTurnIndex}",
+                        style: const TextStyle(color: Colors.white, fontSize: 10),
+                      ),
+                    ),
 
                     // MIS CARTAS
                     if (_myCards.isNotEmpty)
